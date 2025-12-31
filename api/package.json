@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "wrangler dev",
     "build": "wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --env production",
     "typecheck": "tsc --noEmit",
     "db:migrate": "wrangler d1 execute lifelogs-db --local --file=src/db/schema.sql",
-    "db:migrate:prod": "wrangler d1 execute lifelogs-db --file=src/db/schema.sql"
+    "db:migrate:prod": "wrangler d1 execute lifelogs-db --remote --file=src/db/schema.sql",
+    "wrangler": "wrangler"
   },
   "dependencies": {
     "hono": "^4.3.0",

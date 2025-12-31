@@ -8,17 +8,20 @@ ENVIRONMENT = "development"
 [[d1_databases]]
 binding = "DB"
 database_name = "lifelogs-db"
-database_id = "placeholder-update-after-creation"
+database_id = "c4c465cd-f184-4c10-afc6-fc42bc36f77e"
 
 # Production environment
 [env.production]
 name = "lifelogs-api"
+routes = [
+  { pattern = "lifelogs.elliotplant.com/api/*", zone_name = "elliotplant.com" }
+]
 
 [env.production.vars]
 ENVIRONMENT = "production"
-# APP_URL = "https://lifelogs.example.com"
+APP_URL = "https://lifelogs.elliotplant.com"
 
 [[env.production.d1_databases]]
 binding = "DB"
 database_name = "lifelogs-db"
-database_id = "placeholder-update-after-creation"
+database_id = "c4c465cd-f184-4c10-afc6-fc42bc36f77e"
