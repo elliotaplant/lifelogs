@@ -1,0 +1,24 @@
+name = "lifelogs-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[vars]
+ENVIRONMENT = "development"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lifelogs-db"
+database_id = "placeholder-update-after-creation"
+
+# Production environment
+[env.production]
+name = "lifelogs-api"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+# APP_URL = "https://lifelogs.example.com"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "lifelogs-db"
+database_id = "placeholder-update-after-creation"

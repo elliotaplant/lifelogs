@@ -1,0 +1,25 @@
+{
+  "name": "@lifelogs/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "wrangler d1 execute lifelogs-db --local --file=src/db/schema.sql",
+    "db:migrate:prod": "wrangler d1 execute lifelogs-db --file=src/db/schema.sql"
+  },
+  "dependencies": {
+    "hono": "^4.3.0",
+    "@hono/zod-validator": "^0.2.0",
+    "zod": "^3.22.4",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240117.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.28.0"
+  }
+}
