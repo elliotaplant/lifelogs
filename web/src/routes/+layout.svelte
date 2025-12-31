@@ -123,6 +123,7 @@
     position: sticky;
     top: 0;
     z-index: 100;
+    padding-top: env(safe-area-inset-top);
   }
 
   .header-content {

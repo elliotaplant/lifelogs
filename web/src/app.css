@@ -37,6 +37,31 @@ body {
   color: var(--color-gray-900);
   background-color: var(--color-gray-50);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* iOS safe areas */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Prevent pull-to-refresh on iOS */
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 44px;
+  }
+
+  .input {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
 }
 
 a {
