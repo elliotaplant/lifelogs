@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { ulid } from 'ulid';
 import { requireAuth } from '../middleware/auth.js';
 import type { Env, Variables } from '../lib/types.js';
 
@@ -54,7 +53,7 @@ importRoutes.post('/json', zValidator('json', jsonImportSchema), async (c) => {
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
     try {
-      const eventId = ulid();
+      const eventId = crypto.randomUUID();
       const timestamp = parseTimestamp(event.timestamp);
 
       await c.env.DB.prepare(
@@ -123,7 +122,7 @@ importRoutes.post('/csv', async (c) => {
 
     try {
       const values = parseCSVLine(line);
-      const eventId = ulid();
+      const eventId = crypto.randomUUID();
 
       const timestamp = parseTimestamp(values[timestampIdx]);
       const eventType = values[eventTypeIdx];

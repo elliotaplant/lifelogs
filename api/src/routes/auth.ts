@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import { setCookie, deleteCookie } from 'hono/cookie';
-import { ulid } from 'ulid';
 import { hashPassword, verifyPassword } from '../lib/password.js';
 import { SESSION_COOKIE_NAME, requireAuth } from '../middleware/auth.js';
 import type { Env, User, Variables } from '../lib/types.js';
@@ -36,7 +35,7 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
     return c.json({ error: 'Email already registered' }, 400);
   }
 
-  const userId = ulid();
+  const userId = crypto.randomUUID();
   const passwordHash = await hashPassword(password);
   const now = Date.now();
 
@@ -47,7 +46,7 @@ auth.post('/register', zValidator('json', registerSchema), async (c) => {
     .run();
 
   // Create session
-  const sessionId = ulid();
+  const sessionId = crypto.randomUUID();
   const expiresAt = now + SESSION_DURATION_MS;
 
   await c.env.DB.prepare(
@@ -95,7 +94,7 @@ auth.post('/login', zValidator('json', loginSchema), async (c) => {
   }
 
   // Create session
-  const sessionId = ulid();
+  const sessionId = crypto.randomUUID();
   const now = Date.now();
   const expiresAt = now + SESSION_DURATION_MS;
 
@@ -178,7 +177,7 @@ auth.post(
       .run();
 
     // Create reset token
-    const tokenId = ulid();
+    const tokenId = crypto.randomUUID();
     const token = crypto.randomUUID();
     const now = Date.now();
     const expiresAt = now + 60 * 60 * 1000; // 1 hour

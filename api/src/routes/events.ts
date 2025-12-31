@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { ulid } from 'ulid';
 import { requireAuth } from '../middleware/auth.js';
 import type { Env, Event, Variables } from '../lib/types.js';
 
@@ -119,7 +118,7 @@ events.post('/', zValidator('json', createEventSchema), async (c) => {
   const user = c.get('user')!;
   const body = c.req.valid('json');
 
-  const eventId = ulid();
+  const eventId = crypto.randomUUID();
   const now = Date.now();
 
   await c.env.DB.prepare(

@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
-import { ulid } from 'ulid';
 import { requireAuth } from '../middleware/auth.js';
 import type { Env, EventSchema, Variables } from '../lib/types.js';
 
@@ -119,7 +118,7 @@ schemas.post('/', zValidator('json', createSchemaSchema), async (c) => {
     return c.json({ error: 'Schema with this name already exists' }, 400);
   }
 
-  const schemaId = ulid();
+  const schemaId = crypto.randomUUID();
   const now = Date.now();
 
   await c.env.DB.prepare(

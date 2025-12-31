@@ -21,6 +21,9 @@
   $: publicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
   $: isPublicRoute = publicRoutes.some((route) => $page.url.pathname.startsWith(route));
 
+  // Close menu when route changes
+  $: $page.url.pathname, menuOpen = false;
+
   $: if ($authStore.initialized && !$isLoading) {
     if (!$isAuthenticated && !isPublicRoute) {
       goto('/login');
@@ -58,22 +61,19 @@
         </button>
 
         <nav class="nav" class:open={menuOpen}>
-          <a href="/" class="nav-link" class:active={$page.url.pathname === '/'}>
+          <a href="/" class="nav-link" class:active={$page.url.pathname === '/'} on:click={() => (menuOpen = false)}>
             Dashboard
           </a>
-          <a href="/log" class="nav-link" class:active={$page.url.pathname === '/log'}>
+          <a href="/log" class="nav-link" class:active={$page.url.pathname === '/log'} on:click={() => (menuOpen = false)}>
             Log Event
           </a>
-          <a href="/charts" class="nav-link" class:active={$page.url.pathname === '/charts'}>
+          <a href="/charts" class="nav-link" class:active={$page.url.pathname === '/charts'} on:click={() => (menuOpen = false)}>
             Charts
           </a>
-          <a href="/schemas" class="nav-link" class:active={$page.url.pathname === '/schemas'}>
-            Schemas
-          </a>
-          <a href="/import" class="nav-link" class:active={$page.url.pathname === '/import'}>
+          <a href="/import" class="nav-link" class:active={$page.url.pathname === '/import'} on:click={() => (menuOpen = false)}>
             Import
           </a>
-          <button class="nav-link logout-btn" on:click={handleLogout}>
+          <button class="nav-link logout-btn" on:click={() => { menuOpen = false; handleLogout(); }}>
             Logout
           </button>
         </nav>
@@ -146,13 +146,18 @@
     display: none;
     background: none;
     border: none;
-    padding: 0.5rem;
+    padding: 0.75rem;
     cursor: pointer;
+    border-radius: 0.375rem;
+  }
+
+  .menu-toggle:hover {
+    background-color: var(--color-gray-100);
   }
 
   .menu-icon {
     display: block;
-    width: 24px;
+    width: 20px;
     height: 2px;
     background-color: var(--color-gray-700);
     position: relative;
@@ -163,18 +168,19 @@
   .menu-icon::after {
     content: '';
     position: absolute;
-    width: 24px;
+    left: 0;
+    width: 20px;
     height: 2px;
     background-color: var(--color-gray-700);
-    transition: transform 0.2s;
+    transition: transform 0.2s, top 0.2s;
   }
 
   .menu-icon::before {
-    top: -7px;
+    top: -6px;
   }
 
   .menu-icon::after {
-    top: 7px;
+    top: 6px;
   }
 
   .menu-icon.open {
@@ -182,11 +188,13 @@
   }
 
   .menu-icon.open::before {
-    transform: rotate(45deg) translate(5px, 5px);
+    top: 0;
+    transform: rotate(45deg);
   }
 
   .menu-icon.open::after {
-    transform: rotate(-45deg) translate(5px, -5px);
+    top: 0;
+    transform: rotate(-45deg);
   }
 
   .nav {

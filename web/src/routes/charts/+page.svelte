@@ -1,21 +1,13 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { events as eventsApi, schemas as schemasApi, type Event, type EventSchema } from '$lib/api';
-  import {
-    createLineChart,
-    eventsToChartData,
-    eventsToMarkers,
-    type ChartDataPoint,
-    type EventMarker,
-  } from '$lib/chart';
-  import { subDays, startOfDay, endOfDay, format } from 'date-fns';
+  import { onMount, onDestroy, tick } from 'svelte';
+  import { events as eventsApi, type Event } from '$lib/api';
+  import { createLineChart, eventsToChartData, eventsToMarkers } from '$lib/chart';
+  import { subDays, format } from 'date-fns';
 
   let chartCanvas: HTMLCanvasElement;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let chart: ReturnType<typeof createLineChart> | null = null;
 
   let eventTypes: string[] = [];
-  let schemas: EventSchema[] = [];
   let allEvents: Event[] = [];
   let loading = true;
   let error = '';
@@ -27,22 +19,16 @@
   let endDate = format(new Date(), 'yyyy-MM-dd');
   let valueField = '';
 
-  // Available numeric fields from schema or data
+  // Available numeric fields from data
   let availableFields: string[] = [];
 
   onMount(async () => {
     try {
-      const [typesRes, schemasRes] = await Promise.all([
-        eventsApi.listTypes(),
-        schemasApi.list(),
-      ]);
-
+      const typesRes = await eventsApi.listTypes();
       eventTypes = typesRes.types;
-      schemas = schemasRes.schemas;
 
       if (eventTypes.length > 0) {
         selectedType = eventTypes[0];
-        updateAvailableFields();
         await loadEvents();
       }
     } catch (err) {
@@ -59,28 +45,22 @@
   });
 
   function updateAvailableFields() {
-    const schema = schemas.find((s) => s.name === selectedType);
-    if (schema) {
-      availableFields = schema.fields
-        .filter((f) => f.type === 'number' || f.type === 'decimal')
-        .map((f) => f.name);
-    } else {
-      // Try to infer from existing events
-      const typeEvents = allEvents.filter((e) => e.event_type === selectedType);
-      const fieldSet = new Set<string>();
-      for (const event of typeEvents) {
-        if (event.data) {
-          for (const [key, value] of Object.entries(event.data)) {
-            if (typeof value === 'number') {
-              fieldSet.add(key);
-            }
+    // Infer numeric fields from existing events
+    const typeEvents = allEvents.filter((e) => e.event_type === selectedType);
+    const fieldSet = new Set<string>();
+    for (const event of typeEvents) {
+      if (event.data) {
+        for (const [key, value] of Object.entries(event.data)) {
+          // Check if value is numeric or can be parsed as number
+          if (typeof value === 'number' || (typeof value === 'string' && !isNaN(parseFloat(value)))) {
+            fieldSet.add(key);
           }
         }
       }
-      availableFields = Array.from(fieldSet);
     }
+    availableFields = Array.from(fieldSet);
 
-    if (availableFields.length > 0 && !valueField) {
+    if (availableFields.length > 0 && !availableFields.includes(valueField)) {
       valueField = availableFields[0];
     }
   }
@@ -92,14 +72,9 @@
     error = '';
 
     try {
-      const start = startOfDay(new Date(startDate)).getTime();
-      const end = endOfDay(new Date(endDate)).getTime();
-
-      // Load main events
+      // First load all events of this type, then filter client-side if needed
       const { events } = await eventsApi.list({
         event_type: selectedType,
-        start,
-        end,
         limit: 1000,
       });
 
@@ -129,10 +104,12 @@
     }
   }
 
-  function renderChart(markerEvents: Event[] = []) {
+  async function renderChart(markerEvents: Event[] = []) {
+    // Wait for DOM to update so canvas is bound
+    await tick();
+
     if (!chartCanvas) return;
 
-    // Destroy existing chart
     if (chart) {
       chart.destroy();
       chart = null;
@@ -142,24 +119,32 @@
       return;
     }
 
-    const data = eventsToChartData(allEvents, valueField);
+    // Convert string values to numbers for charting
+    const eventsWithNumbers = allEvents.map((e) => ({
+      ...e,
+      data: e.data
+        ? Object.fromEntries(
+            Object.entries(e.data).map(([k, v]) => [
+              k,
+              typeof v === 'string' ? parseFloat(v) : v,
+            ])
+          )
+        : null,
+    }));
+
+    const data = eventsToChartData(eventsWithNumbers as Event[], valueField);
     const markers = eventsToMarkers(markerEvents, { color: '#ef4444' });
 
-    const schema = schemas.find((s) => s.name === selectedType);
-    const field = schema?.fields.find((f) => f.name === valueField);
-    const yAxisLabel = field ? `${field.label}${field.unit ? ` (${field.unit})` : ''}` : valueField;
-
     chart = createLineChart(chartCanvas, data, {
-      label: schema?.label || selectedType,
-      color: schema?.color || '#3b82f6',
+      label: selectedType,
+      color: '#3b82f6',
       markers,
-      yAxisLabel,
+      yAxisLabel: valueField,
     });
   }
 
   function handleTypeChange() {
     valueField = '';
-    updateAvailableFields();
     loadEvents();
   }
 
@@ -171,10 +156,20 @@
     }
     loadEvents();
   }
+
+  function getNumericValues(): number[] {
+    return allEvents
+      .filter((e) => e.data && e.data[valueField] !== undefined)
+      .map((e) => {
+        const val = e.data![valueField];
+        return typeof val === 'string' ? parseFloat(val) : (val as number);
+      })
+      .filter((v) => !isNaN(v));
+  }
 </script>
 
 <div class="charts-page">
-  <h1>Visualization</h1>
+  <h1>Charts</h1>
 
   <div class="filters-section">
     <div class="filter-row">
@@ -187,7 +182,7 @@
           on:change={handleTypeChange}
         >
           {#each eventTypes as type}
-            <option value={type}>{schemas.find((s) => s.name === type)?.label || type}</option>
+            <option value={type}>{type}</option>
           {/each}
         </select>
       </div>
@@ -213,7 +208,7 @@
           id="startDate"
           class="input"
           bind:value={startDate}
-          on:change={loadEvents}
+          on:change={() => loadEvents()}
         />
       </div>
 
@@ -224,7 +219,7 @@
           id="endDate"
           class="input"
           bind:value={endDate}
-          on:change={loadEvents}
+          on:change={() => loadEvents()}
         />
       </div>
     </div>
@@ -240,7 +235,7 @@
                 checked={markerTypes.includes(type)}
                 on:change={() => toggleMarkerType(type)}
               />
-              <span>{schemas.find((s) => s.name === type)?.label || type}</span>
+              <span>{type}</span>
             </label>
           {/each}
         </div>
@@ -266,7 +261,7 @@
   {:else if availableFields.length === 0}
     <div class="empty-state">
       <h2>No numeric fields</h2>
-      <p>This event type doesn't have numeric data to chart.</p>
+      <p>This event type doesn't have numeric data to chart. Add numeric values to your events.</p>
     </div>
   {:else}
     <div class="chart-container">
@@ -279,9 +274,7 @@
         <span class="stat-label">Total Events</span>
       </div>
       {#if allEvents.length > 0 && valueField}
-        {@const values = allEvents
-          .filter((e) => e.data && typeof e.data[valueField] === 'number')
-          .map((e) => Number(e.data?.[valueField]))}
+        {@const values = getNumericValues()}
         {#if values.length > 0}
           <div class="stat-card">
             <span class="stat-value">{Math.min(...values).toFixed(1)}</span>
