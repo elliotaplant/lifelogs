@@ -184,6 +184,8 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    gap: 0.25rem;
   }
 
   .event-type {
@@ -194,6 +196,13 @@
   .event-time {
     font-size: 0.875rem;
     color: var(--color-gray-500);
+  }
+
+  @media (max-width: 480px) {
+    .event-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
   }
 
   .event-data {

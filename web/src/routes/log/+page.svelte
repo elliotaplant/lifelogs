@@ -143,15 +143,16 @@
     {/if}
 
     <div class="form-section">
-      <h2>Event</h2>
       <div class="form-group">
-        <label for="eventType" class="label">Event Type</label>
+        <label for="eventType" class="label">Name</label>
         <input
           type="text"
           id="eventType"
           class="input"
           bind:value={eventType}
           placeholder="e.g., weight, mood, exercise"
+          autocapitalize="off"
+          autocomplete="off"
           required
         />
       </div>
@@ -182,12 +183,22 @@
             class="input"
             placeholder="key"
             bind:value={field.key}
+            autocapitalize="off"
+            autocomplete="off"
           />
           <input
             type="text"
             class="input"
             placeholder="value"
             bind:value={field.value}
+            autocapitalize="off"
+            autocomplete="off"
+            on:input={() => {
+              // Add new field when typing in the last empty value
+              if (index === fields.length - 1 && field.value.length > 0) {
+                fields = [...fields, { key: '', value: '' }];
+              }
+            }}
           />
           <button
             type="button"
